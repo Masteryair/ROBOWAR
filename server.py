@@ -234,10 +234,10 @@ async def websocket_endpoint(ws: WebSocket):
 
             msg_type = str(data.get("type", "")).upper()
             async with state_lock:
-                if msg_type == "ACT":
+                if msg_type == "ACTY":
                     global running
                     running = True
-                elif msg_type == "RST":
+                elif msg_type == "RSTY":
                     reset_state()
                 elif msg_type == "CMD":
                     code = data.get("code")
