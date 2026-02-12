@@ -1,3 +1,4 @@
+import os
 import random
 import threading
 import time
@@ -8,7 +9,7 @@ GRID_W, GRID_H = 20, 20
 N_ROBOTS = 20
 N_OBSTACLES = 40
 N_PRIZES = 30
-DT = 0.5
+DT = float(os.environ.get("DT", "0.2"))
 CONTROLLED_ROBOT_ID = 1
 
 MOVE_MAP = {
@@ -144,7 +145,6 @@ def cmd():
     with state_lock:
         pending_cmds[robot] = MOVE_MAP[move]
     return jsonify({"ok":True})
-import os
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
     app.run(host="0.0.0.0", port=port)
