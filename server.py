@@ -186,14 +186,14 @@ async def simulation_loop():
         await manager.broadcast(snapshot)
 
 # ===================== HTTP API =====================
-@app.get("/ACT")
+@app.get("/ACTY")
 async def act():
     global running
     async with state_lock:
         running = True
     return {"status": "RUNNING"}
 
-@app.get("/RST")
+@app.get("/RSTY")
 async def rst():
     async with state_lock:
         reset_state()
