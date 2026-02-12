@@ -5,13 +5,38 @@ import os
 import json
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
-PORT = int(os.environ.get("PORT", 8000))
+
 # ===================== CONFIG =====================
 GRID_W, GRID_H = 20, 20
 N_ROBOTS = 20
 N_OBSTACLES = 40
 N_PRIZES = 30
 DT = 0.5  # seconds
+
+# 5-digit access codes per robot id (update as needed)
+ROBOT_CODE_MAP = {
+    0: "00000",
+    1: "00001",
+    2: "00002",
+    3: "00003",
+    4: "00004",
+    5: "00005",
+    6: "00006",
+    7: "00007",
+    8: "00008",
+    9: "00009",
+    10: "00010",
+    11: "00011",
+    12: "00012",
+    13: "00013",
+    14: "00014",
+    15: "00015",
+    16: "00016",
+    17: "00017",
+    18: "00018",
+    19: "00019"
+}
+CODE_TO_ROBOT = {v: k for k, v in ROBOT_CODE_MAP.items()}
 
 MOVE_MAP = {
     "RIGHT": (1, 0),
@@ -112,6 +137,13 @@ def build_snapshot():
         ]
     }
 
+def resolve_robot_id(code, robot):
+    if code is not None:
+        return CODE_TO_ROBOT.get(str(code))
+    if robot is not None:
+        return int(robot)
+    return None
+
 # ===================== SIM LOOP =====================
 async def simulation_loop():
     global step_counter
@@ -168,17 +200,21 @@ async def rst():
     return {"status": "RESET"}
 
 @app.get("/CMD")
-async def cmd(robot: int, move: str):
+async def cmd(move: str, code: str = None, robot: int = None):
     move = move.upper()
     if move not in MOVE_MAP:
         return JSONResponse({"error": "bad move"}, status_code=400)
+
+    rid = resolve_robot_id(code, robot)
+    if rid is None:
+        return JSONResponse({"error": "bad code"}, status_code=400)
 
     async with state_lock:
         if not running:
             return JSONResponse({"error": "not running"}, status_code=400)
 
-        if robot not in pending_cmds:
-            pending_cmds[robot] = MOVE_MAP[move]
+        if rid not in pending_cmds:
+            pending_cmds[rid] = MOVE_MAP[move]
 
     return {"ok": True}
 
@@ -204,10 +240,12 @@ async def websocket_endpoint(ws: WebSocket):
                 elif msg_type == "RST":
                     reset_state()
                 elif msg_type == "CMD":
-                    robot = int(data.get("robot", -1))
+                    code = data.get("code")
+                    robot = data.get("robot")
                     move = str(data.get("move", "")).upper()
-                    if move in MOVE_MAP and robot >= 0:
-                        pending_cmds[robot] = MOVE_MAP[move]
+                    rid = resolve_robot_id(code, robot)
+                    if move in MOVE_MAP and rid is not None:
+                        pending_cmds[rid] = MOVE_MAP[move]
     except WebSocketDisconnect:
         manager.disconnect(ws)
 
