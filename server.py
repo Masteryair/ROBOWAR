@@ -5,7 +5,7 @@ import os
 import json
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
-
+PORT = int(os.environ.get("PORT", 8000))
 # ===================== CONFIG =====================
 GRID_W, GRID_H = 20, 20
 N_ROBOTS = 20
